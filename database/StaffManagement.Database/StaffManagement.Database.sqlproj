@@ -7,4 +7,7 @@
     <ModelCollation>1033, CI</ModelCollation>
     <ProjectGuid>1ADF6EB1-5109-4A5D-AAA1-8463FB152332</ProjectGuid>
   </PropertyGroup>
+  <ItemGroup>
+    <PostDeploy Include="PostDeploy\Script.PostDeployment.sql" />
+  </ItemGroup>
 </Project>

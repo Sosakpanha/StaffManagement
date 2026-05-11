@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "database", "database", "{6732342D-900A-465C-A020-EC0C7A43DD20}"
+EndProject
+Project("{42EA0DBD-9CF1-443E-919E-BE9C484E4577}") = "StaffManagement.Database", "database\StaffManagement.Database\StaffManagement.Database.sqlproj", "{1ADF6EB1-5109-4A5D-AAA1-8463FB152332}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend", "backend", "{E5FE8228-D3DE-4E51-B898-6552D16847AF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C7B8F7C2-A39E-4257-991B-E207E584A0AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StaffManagement.Api", "backend\src\StaffManagement.Api\StaffManagement.Api.csproj", "{E3303AD1-29B4-4ED4-9AD2-D4DF220107EC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E58F51FC-61FD-4FB9-8E59-167E4FBD2296}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StaffManagement.UnitTests", "backend\tests\StaffManagement.UnitTests\StaffManagement.UnitTests.csproj", "{20526072-BC8F-408F-BF02-1A2E3A1A79E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StaffManagement.IntegrationTests", "backend\tests\StaffManagement.IntegrationTests\StaffManagement.IntegrationTests.csproj", "{D297C9B7-5DD3-4815-92B3-5AFF32D0C32B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1ADF6EB1-5109-4A5D-AAA1-8463FB152332}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1ADF6EB1-5109-4A5D-AAA1-8463FB152332}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1ADF6EB1-5109-4A5D-AAA1-8463FB152332}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1ADF6EB1-5109-4A5D-AAA1-8463FB152332}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3303AD1-29B4-4ED4-9AD2-D4DF220107EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3303AD1-29B4-4ED4-9AD2-D4DF220107EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3303AD1-29B4-4ED4-9AD2-D4DF220107EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3303AD1-29B4-4ED4-9AD2-D4DF220107EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20526072-BC8F-408F-BF02-1A2E3A1A79E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20526072-BC8F-408F-BF02-1A2E3A1A79E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20526072-BC8F-408F-BF02-1A2E3A1A79E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20526072-BC8F-408F-BF02-1A2E3A1A79E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D297C9B7-5DD3-4815-92B3-5AFF32D0C32B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D297C9B7-5DD3-4815-92B3-5AFF32D0C32B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D297C9B7-5DD3-4815-92B3-5AFF32D0C32B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D297C9B7-5DD3-4815-92B3-5AFF32D0C32B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1ADF6EB1-5109-4A5D-AAA1-8463FB152332} = {6732342D-900A-465C-A020-EC0C7A43DD20}
+		{C7B8F7C2-A39E-4257-991B-E207E584A0AA} = {E5FE8228-D3DE-4E51-B898-6552D16847AF}
+		{E3303AD1-29B4-4ED4-9AD2-D4DF220107EC} = {C7B8F7C2-A39E-4257-991B-E207E584A0AA}
+		{E58F51FC-61FD-4FB9-8E59-167E4FBD2296} = {E5FE8228-D3DE-4E51-B898-6552D16847AF}
+		{20526072-BC8F-408F-BF02-1A2E3A1A79E1} = {E58F51FC-61FD-4FB9-8E59-167E4FBD2296}
+		{D297C9B7-5DD3-4815-92B3-5AFF32D0C32B} = {E58F51FC-61FD-4FB9-8E59-167E4FBD2296}
+	EndGlobalSection
+EndGlobal

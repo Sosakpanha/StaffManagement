@@ -32,7 +32,9 @@ docker compose up -d sqlserver
 # 3. Database schema (builds the .sqlproj and publishes the DACPAC).
 ./database/scripts/deploy.sh
 
-# 4. Backend API.
+# 4. Backend API. Source .env first so ConnectionStrings__DefaultConnection
+#    (and the rest of the file) ends up in the process environment.
+set -a && source .env && set +a
 ASPNETCORE_URLS=http://localhost:5000 \
 ASPNETCORE_ENVIRONMENT=Development \
 dotnet run --project backend/src/StaffManagement.Api --no-launch-profile

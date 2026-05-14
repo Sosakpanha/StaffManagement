@@ -68,8 +68,12 @@ export function StaffListPage() {
 
 	useEffect(() => {
 		let cancelled = false
+		// Standard cancellable fetch-on-mount pattern: the loading flag has
+		// to flip on at effect start, then back off in finally().
+		/* eslint-disable react-hooks/set-state-in-effect */
 		setLoading(true)
 		setLoadError(null)
+		/* eslint-enable react-hooks/set-state-in-effect */
 		searchStaff(search)
 			.then((page) => {
 				if (cancelled) return

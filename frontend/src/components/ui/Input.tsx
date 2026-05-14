@@ -49,10 +49,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 	)
 })
 
-type PasswordProps = Omit<InputProps, 'type'>
+type PasswordProps = Omit<InputProps, 'type' | 'trailing'>
 
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordProps>(function PasswordInput(
-	{ trailing, ...props },
+	props,
 	ref,
 ) {
 	const [visible, setVisible] = useState(false)

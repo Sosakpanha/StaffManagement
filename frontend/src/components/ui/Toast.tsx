@@ -1,8 +1,12 @@
+/* eslint-disable react-refresh/only-export-components --
+ * ToastProvider and useToast are a Context provider / consumer pair that
+ * are idiomatic to ship together. Splitting them across files for HMR
+ * isn't worth the indirection.
+ */
 import {
 	createContext,
 	useCallback,
 	useContext,
-	useEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -110,14 +114,4 @@ export function useToast() {
 	const ctx = useContext(ToastContext)
 	if (!ctx) throw new Error('useToast must be used inside <ToastProvider>.')
 	return ctx.push
-}
-
-// Effect helper: convenient one-liner for components that want to push a
-// toast in response to a prop / mount.
-export function useToastOnce(toast: Omit<Toast, 'id'> | null) {
-	const push = useToast()
-	useEffect(() => {
-		if (toast) push(toast)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [toast])
 }

@@ -15,7 +15,6 @@ public sealed class StaffExcelExporter : IStaffExporter
 		using var workbook = new XLWorkbook();
 		var sheet = workbook.Worksheets.Add("Staff");
 
-		// Header row.
 		sheet.Cell(1, 1).Value = "Staff ID";
 		sheet.Cell(1, 2).Value = "Full Name";
 		sheet.Cell(1, 3).Value = "Birthday";
@@ -27,7 +26,6 @@ public sealed class StaffExcelExporter : IStaffExporter
 		headerRange.Style.Font.Bold = true;
 		headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
 
-		// Data rows.
 		for (var i = 0; i < staff.Count; i++)
 		{
 			var s = staff[i];

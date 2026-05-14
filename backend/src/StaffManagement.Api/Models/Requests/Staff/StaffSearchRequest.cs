@@ -1,8 +1,7 @@
 namespace StaffManagement.Api.Models.Requests.Staff;
 
 /// <summary>
-/// Query parameters for advanced search and export. All filters are optional;
-/// when omitted, the corresponding criterion does not narrow the result set.
+/// All filters are optional; an omitted criterion does not narrow the result set.
 /// </summary>
 public class StaffSearchRequest
 {

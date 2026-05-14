@@ -24,7 +24,6 @@ interface TableProps<T> {
 	sortBy?: string
 	sortDir?: SortDir
 	onSortChange?: (key: string, dir: SortDir) => void
-	// Pagination
 	page?: number
 	pageSize?: number
 	total?: number

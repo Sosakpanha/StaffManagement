@@ -35,11 +35,9 @@ try
 
 	var builder = WebApplication.CreateBuilder(args);
 
-	// Replace the default logging with NLog.
 	builder.Logging.ClearProviders();
 	builder.Host.UseNLog();
 
-	// Controllers + Newtonsoft.Json with camelCase property names.
 	builder.Services
 		.AddControllers(options =>
 		{
@@ -52,8 +50,8 @@ try
 		})
 		.ConfigureApiBehaviorOptions(options =>
 		{
-			// Map model-validation failures into our standard {code, message}
-			// envelope so clients have one shape to handle.
+			// Route model-validation failures through the same {code, message}
+			// envelope as ApiException so clients have one shape to handle.
 			options.InvalidModelStateResponseFactory = context =>
 			{
 				var errors = context.ModelState
@@ -78,13 +76,11 @@ try
 
 	builder.Services.AddSingleton<ExceptionFilter>();
 
-	// Application services (all stateless → singleton).
 	builder.Services.AddSingleton<IStaffRepository, StaffRepository>();
 	builder.Services.AddSingleton<IStaffService, StaffService>();
 	builder.Services.AddSingleton<StaffExcelExporter>();
 	builder.Services.AddSingleton<StaffPdfExporter>();
 
-	// Swagger.
 	builder.Services.AddEndpointsApiExplorer();
 	builder.Services.AddSwaggerGen(options =>
 	{
@@ -95,7 +91,6 @@ try
 		});
 	});
 
-	// Data access.
 	var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
 		?? throw new InvalidOperationException(
 			"Connection string 'DefaultConnection' is missing. " +
@@ -103,10 +98,8 @@ try
 
 	builder.Services.AddSingleton<IDbConnectionFactory>(new SqlConnectionFactory(connectionString));
 
-	// Health checks.
 	builder.Services.AddHealthChecks();
 
-	// CORS (allowed origins are configurable per environment).
 	builder.Services.AddCors(options =>
 	{
 		var allowedOrigins = builder.Configuration

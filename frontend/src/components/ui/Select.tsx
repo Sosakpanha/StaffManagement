@@ -36,7 +36,6 @@ export function Select<T extends string | number>({
 
 	const current = options.find((o) => o.value === value)
 
-	// Close on outside click.
 	useEffect(() => {
 		if (!open) return
 		function onDocClick(e: MouseEvent) {

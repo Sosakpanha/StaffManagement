@@ -13,7 +13,7 @@ interface PopconfirmProps {
 
 /**
  * Click the wrapped child to open a small confirmation popover anchored
- * underneath it. Used for inline delete buttons in tables.
+ * underneath it.
  */
 export function Popconfirm({
 	title,

@@ -1,5 +1,3 @@
-// Mirrors backend DTOs in StaffManagement.Api.Models.* (camelCase via Newtonsoft).
-
 export type Gender = 1 | 2
 
 export interface StaffResponse {

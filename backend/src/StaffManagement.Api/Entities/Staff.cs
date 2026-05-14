@@ -1,8 +1,5 @@
 namespace StaffManagement.Api.Entities;
 
-/// <summary>
-/// Database row for dbo.Staff.
-/// </summary>
 public class Staff
 {
 	public Guid Id { get; set; }

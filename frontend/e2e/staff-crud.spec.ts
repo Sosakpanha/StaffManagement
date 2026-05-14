@@ -60,7 +60,7 @@ test.describe('Staff CRUD', () => {
 		await expect(page.getByRole('cell', { name: updatedName, exact: true })).toBeVisible()
 	})
 
-	test('deletes the staff member', async ({ page }) => {
+	test('deletes the staff member and shows a confirmation toast', async ({ page }) => {
 		await page.goto('/staff')
 		await page.getByPlaceholder('Search by full name').fill(updatedName)
 		await page.getByRole('button', { name: 'Search', exact: true }).click()
@@ -70,6 +70,12 @@ test.describe('Staff CRUD', () => {
 		await expect(dialog).toBeVisible()
 		await expect(dialog.getByText(/permanently delete/i)).toBeVisible()
 		await dialog.getByRole('button', { name: 'Delete' }).click()
+
+		// Soft-delete toast shows what was deleted.
+		const toast = page.getByRole('status').filter({ hasText: 'Staff deleted' })
+		await expect(toast).toBeVisible()
+		await expect(toast).toContainText(updatedName)
+		await expect(toast).toContainText(staffId)
 
 		await expect(page.getByRole('cell', { name: updatedName, exact: true })).toHaveCount(0)
 	})

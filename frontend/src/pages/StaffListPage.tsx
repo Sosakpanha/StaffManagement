@@ -21,6 +21,7 @@ import { ConfirmModal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
 import { Table, type SortDir, type TableColumn } from '../components/ui/Table'
 import { Tag } from '../components/ui/Tag'
+import { useToast } from '../components/ui/Toast'
 import type { StaffResponse, StaffSearchRequest } from '../types/staff'
 import { toIsoDate } from '../utils/dates'
 
@@ -46,6 +47,7 @@ function GenderTag({ value }: { value: 1 | 2 }) {
 
 export function StaffListPage() {
 	const navigate = useNavigate()
+	const pushToast = useToast()
 
 	const [search, setSearch] = useState<StaffSearchRequest>(DEFAULT_SEARCH)
 	const [quickName, setQuickName] = useState('')
@@ -163,9 +165,14 @@ export function StaffListPage() {
 		setDeleting(true)
 		setDeleteError(null)
 		try {
-			await deleteStaff(toDelete.id)
+			const deleted = await deleteStaff(toDelete.id)
 			setToDelete(null)
 			setSearch((prev) => ({ ...prev })) // re-trigger the effect
+			pushToast({
+				tone: 'success',
+				title: 'Staff deleted',
+				description: `${deleted.fullName} (${deleted.staffId}) has been deleted.`,
+			})
 		} catch (err) {
 			const msg = err instanceof ApiException ? err.message : 'Delete failed.'
 			setDeleteError(msg)

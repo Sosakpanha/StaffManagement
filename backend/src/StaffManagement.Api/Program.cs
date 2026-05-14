@@ -107,7 +107,9 @@ try
 		                     | HttpLoggingFields.RequestPath
 		                     | HttpLoggingFields.ResponseStatusCode
 		                     | HttpLoggingFields.Duration;
-		options.CombineLogs = true;
+		// Emit a "Request:" line when the request arrives and a "Response:"
+		// line when it's written, so the log shows both incoming and outgoing.
+		options.CombineLogs = false;
 	});
 
 	builder.Services.AddCors(options =>

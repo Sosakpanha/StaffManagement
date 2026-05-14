@@ -85,7 +85,7 @@ public sealed class StaffRepository : IStaffRepository
 		}
 	}
 
-	public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+	public async Task<Staff> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
 	{
 		await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
@@ -97,7 +97,9 @@ public sealed class StaffRepository : IStaffRepository
 
 		try
 		{
-			await connection.ExecuteAsync(command);
+			// DeleteStaff is a soft-delete: it flips IsDeleted=1 and returns the
+			// row so callers can confirm what was deleted (and surface it in the UI).
+			return await connection.QuerySingleAsync<Staff>(command);
 		}
 		catch (SqlException ex)
 		{

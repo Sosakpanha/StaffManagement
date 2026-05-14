@@ -11,7 +11,7 @@ public interface IStaffRepository
 
 	Task<Staff> UpdateAsync(Guid id, StaffUpdateRequest request, CancellationToken cancellationToken = default);
 
-	Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+	Task<Staff> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 
 	Task<(IReadOnlyList<Staff> Items, int TotalCount)> SearchAsync(StaffSearchRequest request, CancellationToken cancellationToken = default);
 }

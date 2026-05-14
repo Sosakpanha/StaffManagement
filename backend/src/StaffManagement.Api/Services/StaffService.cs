@@ -41,8 +41,11 @@ public sealed class StaffService : IStaffService
 		return MapToResponse(entity);
 	}
 
-	public Task DeleteAsync(Guid id, CancellationToken cancellationToken = default) =>
-		_staffRepository.DeleteAsync(id, cancellationToken);
+	public async Task<StaffResponse> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+	{
+		var entity = await _staffRepository.DeleteAsync(id, cancellationToken);
+		return MapToResponse(entity);
+	}
 
 	public async Task<PagedResponse<StaffResponse>> SearchAsync(StaffSearchRequest request, CancellationToken cancellationToken = default)
 	{

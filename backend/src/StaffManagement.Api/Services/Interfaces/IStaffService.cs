@@ -11,7 +11,7 @@ public interface IStaffService
 
 	Task<StaffResponse> UpdateAsync(Guid id, StaffUpdateRequest request, CancellationToken cancellationToken = default);
 
-	Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+	Task<StaffResponse> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 
 	Task<PagedResponse<StaffResponse>> SearchAsync(StaffSearchRequest request, CancellationToken cancellationToken = default);
 }

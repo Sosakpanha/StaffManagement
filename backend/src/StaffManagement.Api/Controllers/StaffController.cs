@@ -54,11 +54,12 @@ public class StaffController : ControllerBase
 	}
 
 	[HttpDelete("{id:guid}")]
-	public async Task<IActionResult> Delete(
+	public async Task<StaffResponse> Delete(
 		Guid id,
 		CancellationToken cancellationToken)
 	{
-		await _staffService.DeleteAsync(id, cancellationToken);
-		return NoContent();
+		// Soft-delete: returns the row we just marked deleted so the
+		// frontend can show a confirmation toast with the staff's name.
+		return await _staffService.DeleteAsync(id, cancellationToken);
 	}
 }

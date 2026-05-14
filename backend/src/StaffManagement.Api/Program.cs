@@ -1,6 +1,5 @@
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
+using Dapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -9,10 +8,21 @@ using NLog.Web;
 using QuestPDF.Infrastructure;
 using StaffManagement.Api.Data;
 using StaffManagement.Api.Data.Interfaces;
+using StaffManagement.Api.Enums;
+using StaffManagement.Api.Exports;
 using StaffManagement.Api.Filters;
+using StaffManagement.Api.Repositories;
+using StaffManagement.Api.Repositories.Interfaces;
+using StaffManagement.Api.Services;
+using StaffManagement.Api.Services.Interfaces;
 
 // QuestPDF Community license must be set before any PDF is generated.
 QuestPDF.Settings.License = LicenseType.Community;
+
+// Dapper 2.1.x doesn't ship DateOnly handlers; register ours so the
+// repositories can pass DateOnly straight through to SQL `date` columns.
+SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
+SqlMapper.AddTypeHandler(new NullableDateOnlyTypeHandler());
 
 // Bootstrap NLog before WebApplication.CreateBuilder so startup errors are captured.
 var logger = LogManager.Setup()
@@ -39,11 +49,42 @@ try
 		{
 			options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
 			options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+		})
+		.ConfigureApiBehaviorOptions(options =>
+		{
+			// Map model-validation failures into our standard {code, message}
+			// envelope so clients have one shape to handle.
+			options.InvalidModelStateResponseFactory = context =>
+			{
+				var errors = context.ModelState
+					.Where(kvp => kvp.Value is { Errors.Count: > 0 })
+					.SelectMany(kvp => kvp.Value!.Errors.Select(e =>
+						string.IsNullOrEmpty(e.ErrorMessage)
+							? $"{kvp.Key} is invalid."
+							: $"{kvp.Key}: {e.ErrorMessage}"));
+
+				var message = string.Join(" ", errors);
+
+				return new ObjectResult(new
+				{
+					code = (int)EnumApiError.ValidationFailed,
+					message
+				})
+				{
+					StatusCode = StatusCodes.Status400BadRequest
+				};
+			};
 		});
 
 	builder.Services.AddSingleton<ExceptionFilter>();
 
-	// Swagger with JWT bearer scheme.
+	// Application services (all stateless → singleton).
+	builder.Services.AddSingleton<IStaffRepository, StaffRepository>();
+	builder.Services.AddSingleton<IStaffService, StaffService>();
+	builder.Services.AddSingleton<StaffExcelExporter>();
+	builder.Services.AddSingleton<StaffPdfExporter>();
+
+	// Swagger.
 	builder.Services.AddEndpointsApiExplorer();
 	builder.Services.AddSwaggerGen(options =>
 	{
@@ -51,31 +92,6 @@ try
 		{
 			Title = "StaffManagement.Api",
 			Version = "v1"
-		});
-
-		options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-		{
-			Description = "JWT bearer token. Format: 'Bearer {token}'.",
-			Name = "Authorization",
-			In = ParameterLocation.Header,
-			Type = SecuritySchemeType.Http,
-			Scheme = "bearer",
-			BearerFormat = "JWT"
-		});
-
-		options.AddSecurityRequirement(new OpenApiSecurityRequirement
-		{
-			{
-				new OpenApiSecurityScheme
-				{
-					Reference = new OpenApiReference
-					{
-						Type = ReferenceType.SecurityScheme,
-						Id = "Bearer"
-					}
-				},
-				Array.Empty<string>()
-			}
 		});
 	});
 
@@ -100,34 +116,8 @@ try
 		options.AddDefaultPolicy(policy => policy
 			.WithOrigins(allowedOrigins)
 			.AllowAnyHeader()
-			.AllowAnyMethod()
-			.AllowCredentials());
+			.AllowAnyMethod());
 	});
-
-	// JWT bearer authentication (token issuance lives in the auth feature).
-	var jwtSection = builder.Configuration.GetSection("Jwt");
-	var signingKey = jwtSection["SigningKey"]
-		?? throw new InvalidOperationException(
-			"Jwt:SigningKey is missing. Set Jwt__SigningKey in the environment.");
-
-	builder.Services
-		.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-		.AddJwtBearer(options =>
-		{
-			options.TokenValidationParameters = new TokenValidationParameters
-			{
-				ValidateIssuer = !string.IsNullOrEmpty(jwtSection["Issuer"]),
-				ValidIssuer = jwtSection["Issuer"],
-				ValidateAudience = !string.IsNullOrEmpty(jwtSection["Audience"]),
-				ValidAudience = jwtSection["Audience"],
-				ValidateIssuerSigningKey = true,
-				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
-				ValidateLifetime = true,
-				ClockSkew = TimeSpan.FromSeconds(30)
-			};
-		});
-
-	builder.Services.AddAuthorization();
 
 	var app = builder.Build();
 
@@ -139,8 +129,6 @@ try
 
 	app.UseHttpsRedirection();
 	app.UseCors();
-	app.UseAuthentication();
-	app.UseAuthorization();
 
 	app.MapControllers();
 	app.MapHealthChecks("/health");
@@ -156,3 +144,6 @@ finally
 {
 	LogManager.Shutdown();
 }
+
+// Exposed for WebApplicationFactory<Program> in the integration tests.
+public partial class Program;

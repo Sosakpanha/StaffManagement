@@ -7,10 +7,8 @@ namespace StaffManagement.Api.Enums;
 /// </summary>
 public enum EnumApiError
 {
-	UnknownError       = 50000,
-	DuplicateStaffId   = 50001,
-	StaffNotFound      = 50404,
-	InvalidCredentials = 40001,
-	ValidationFailed   = 40000,
-	Unauthorized       = 40100
+	UnknownError     = 50000,
+	DuplicateStaffId = 50001,
+	StaffNotFound    = 50404,
+	ValidationFailed = 40000
 }

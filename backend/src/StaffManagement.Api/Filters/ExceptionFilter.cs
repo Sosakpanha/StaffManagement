@@ -23,13 +23,26 @@ public sealed class ExceptionFilter : IExceptionFilter
 	public void OnException(ExceptionContext context)
 	{
 		var exception = context.Exception;
-
-		_logger.LogError(exception,
-			"Unhandled exception in {Method} {Path}",
-			context.HttpContext.Request.Method,
-			context.HttpContext.Request.Path);
-
 		var (status, code, message) = MapException(exception);
+
+		// Expected business errors (ApiException) are Warnings; only truly
+		// unexpected things are logged at Error.
+		if (exception is ApiException)
+		{
+			_logger.LogWarning(
+				"Handled {Code} ({Status}) in {Method} {Path}: {Message}",
+				code, status,
+				context.HttpContext.Request.Method,
+				context.HttpContext.Request.Path,
+				exception.Message);
+		}
+		else
+		{
+			_logger.LogError(exception,
+				"Unhandled exception in {Method} {Path}",
+				context.HttpContext.Request.Method,
+				context.HttpContext.Request.Path);
+		}
 
 		context.Result = new ObjectResult(new
 		{
@@ -60,12 +73,10 @@ public sealed class ExceptionFilter : IExceptionFilter
 	{
 		var status = api.ErrorCode switch
 		{
-			EnumApiError.DuplicateStaffId   => StatusCodes.Status409Conflict,
-			EnumApiError.StaffNotFound      => StatusCodes.Status404NotFound,
-			EnumApiError.InvalidCredentials => StatusCodes.Status401Unauthorized,
-			EnumApiError.Unauthorized       => StatusCodes.Status401Unauthorized,
-			EnumApiError.ValidationFailed   => StatusCodes.Status400BadRequest,
-			_                               => StatusCodes.Status500InternalServerError
+			EnumApiError.DuplicateStaffId => StatusCodes.Status409Conflict,
+			EnumApiError.StaffNotFound    => StatusCodes.Status404NotFound,
+			EnumApiError.ValidationFailed => StatusCodes.Status400BadRequest,
+			_                             => StatusCodes.Status500InternalServerError
 		};
 
 		return (status, api.ErrorCode, api.Message);

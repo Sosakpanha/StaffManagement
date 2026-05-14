@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
@@ -100,6 +101,15 @@ try
 
 	builder.Services.AddHealthChecks();
 
+	builder.Services.AddHttpLogging(options =>
+	{
+		options.LoggingFields = HttpLoggingFields.RequestMethod
+		                     | HttpLoggingFields.RequestPath
+		                     | HttpLoggingFields.ResponseStatusCode
+		                     | HttpLoggingFields.Duration;
+		options.CombineLogs = true;
+	});
+
 	builder.Services.AddCors(options =>
 	{
 		var allowedOrigins = builder.Configuration
@@ -122,6 +132,7 @@ try
 
 	app.UseHttpsRedirection();
 	app.UseCors();
+	app.UseHttpLogging();
 
 	app.MapControllers();
 	app.MapHealthChecks("/health");

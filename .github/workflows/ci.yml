@@ -1,0 +1,181 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_NOLOGO: 'true'
+  # CI-only SQL Server password. Must satisfy SQL Server's complexity policy
+  # (upper / lower / digit / symbol, 8+ chars). Same value across the
+  # service-container env and the connection string below.
+  MSSQL_SA_PASSWORD: ChangeMe_DevPassword123!
+
+jobs:
+  backend:
+    name: Backend (build + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.sqlproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore StaffManagement.sln
+
+      - name: Build (solution incl. sqlproj)
+        run: dotnet build StaffManagement.sln --configuration Release --no-restore
+
+      - name: Test (NUnit + Testcontainers.MsSql)
+        run: dotnet test backend/tests/StaffManagement.Test/StaffManagement.Test.csproj
+          --configuration Release --no-build --verbosity minimal
+
+  frontend:
+    name: Frontend (lint + unit + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:unit -- --run
+
+      - name: Build
+        run: npm run build
+
+  e2e:
+    name: E2E (Playwright)
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          MSSQL_SA_PASSWORD: ChangeMe_DevPassword123!
+          MSSQL_PID: Developer
+        ports:
+          - 1433:1433
+    env:
+      # API and frontend config for the live stack the Playwright suite runs against.
+      ConnectionStrings__DefaultConnection: 'Server=localhost,1433;Database=StaffManagement;User Id=sa;Password=ChangeMe_DevPassword123!;TrustServerCertificate=True;Encrypt=False'
+      ASPNETCORE_URLS: http://localhost:5000
+      ASPNETCORE_ENVIRONMENT: Development
+      VITE_API_BASE_URL: http://localhost:5000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.sqlproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Wait for SQL Server to accept connections
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec ${{ job.services.sqlserver.id }} /opt/mssql-tools18/bin/sqlcmd \
+                -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -Q 'SELECT 1' -C >/dev/null 2>&1; then
+              echo "SQL Server ready after ${i} attempts."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "SQL Server never became ready."
+          docker logs ${{ job.services.sqlserver.id }} || true
+          exit 1
+
+      - name: Install sqlpackage
+        run: dotnet tool install --global Microsoft.SqlPackage --ignore-failed-sources
+
+      - name: Build and publish DACPAC
+        run: |
+          dotnet build database/StaffManagement.Database/StaffManagement.Database.sqlproj \
+            --configuration Debug
+          ~/.dotnet/tools/sqlpackage \
+            /Action:Publish \
+            /SourceFile:database/StaffManagement.Database/bin/Debug/StaffManagement.Database.dacpac \
+            /TargetServerName:localhost,1433 \
+            /TargetDatabaseName:StaffManagement \
+            /TargetUser:sa \
+            /TargetPassword:"$MSSQL_SA_PASSWORD" \
+            /TargetTrustServerCertificate:True
+
+      - name: Restore API
+        run: dotnet restore backend/src/StaffManagement.Api/StaffManagement.Api.csproj
+
+      - name: Start API
+        run: |
+          nohup dotnet run \
+            --project backend/src/StaffManagement.Api/StaffManagement.Api.csproj \
+            --no-launch-profile > api.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:5000/health >/dev/null 2>&1; then
+              echo "API ready after ${i} seconds."
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API never became ready. Logs:"
+          cat api.log || true
+          exit 1
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browser
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        working-directory: frontend
+        run: npx playwright test
+
+      - name: Upload Playwright artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+            api.log
+          if-no-files-found: ignore
+          retention-days: 7

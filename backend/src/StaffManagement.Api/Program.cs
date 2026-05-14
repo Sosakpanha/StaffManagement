@@ -6,6 +6,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NLog;
 using NLog.Web;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using QuestPDF.Infrastructure;
 using StaffManagement.Api.Data;
 using StaffManagement.Api.Data.Interfaces;
@@ -87,6 +90,24 @@ try
 
 	builder.Services.Configure<SoftDeleteRetentionOptions>(builder.Configuration.GetSection("Staff:Retention"));
 	builder.Services.AddHostedService<SoftDeleteRetentionService>();
+
+	// OpenTelemetry tracing + metrics. The OTLP exporter is wired in
+	// unconditionally; the SDK reads OTEL_EXPORTER_OTLP_ENDPOINT (and the
+	// rest of the OTEL_* env vars) at runtime, so without an endpoint
+	// configured the instrumentation runs in-process and exports nowhere.
+	builder.Services.AddOpenTelemetry()
+		.ConfigureResource(r => r.AddService(
+			serviceName: "StaffManagement.Api",
+			serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "0.0.0"))
+		.WithTracing(tracing => tracing
+			.AddAspNetCoreInstrumentation(o => o.Filter = ctx =>
+				!ctx.Request.Path.StartsWithSegments("/health"))
+			.AddSqlClientInstrumentation(o => o.RecordException = true)
+			.AddOtlpExporter())
+		.WithMetrics(metrics => metrics
+			.AddAspNetCoreInstrumentation()
+			.AddRuntimeInstrumentation()
+			.AddOtlpExporter());
 
 	builder.Services.AddEndpointsApiExplorer();
 	builder.Services.AddSwaggerGen(options =>

@@ -1,4 +1,5 @@
 using Dapper;
+using Hangfire;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
@@ -14,8 +15,10 @@ using StaffManagement.Api.Data;
 using StaffManagement.Api.Data.Interfaces;
 using StaffManagement.Api.Enums;
 using StaffManagement.Api.Exports;
+using StaffManagement.Api.Extensions;
 using StaffManagement.Api.Filters;
 using StaffManagement.Api.HostedServices;
+using StaffManagement.Api.Models.Settings;
 using StaffManagement.Api.Repositories;
 using StaffManagement.Api.Repositories.Interfaces;
 using StaffManagement.Api.Services;
@@ -91,6 +94,11 @@ try
 	builder.Services.Configure<SoftDeleteRetentionOptions>(builder.Configuration.GetSection("Staff:Retention"));
 	builder.Services.AddHostedService<SoftDeleteRetentionService>();
 
+	builder.Services.Configure<SchedulerSettings>(builder.Configuration.GetSection(nameof(SchedulerSettings)));
+	builder.Services.AddJobScheduler();
+	builder.Services.AddSingleton<JobRunner>();
+	builder.Services.AddHostedService(sp => sp.GetRequiredService<JobRunner>());
+
 	// OpenTelemetry tracing + metrics. The OTLP exporter is wired in
 	// unconditionally; the SDK reads OTEL_EXPORTER_OTLP_ENDPOINT (and the
 	// rest of the OTEL_* env vars) at runtime, so without an endpoint
@@ -157,6 +165,9 @@ try
 	{
 		app.UseSwagger();
 		app.UseSwaggerUI();
+		// Hangfire dashboard is unauthenticated, so only expose it locally
+		// until [Authorize] gates the route in production.
+		app.UseHangfireDashboard("/hangfire");
 	}
 
 	app.UseHttpsRedirection();

@@ -9,8 +9,7 @@ namespace StaffManagement.Api.Controllers;
 [Route("api/staff/export")]
 public class StaffExportController : ControllerBase
 {
-	// Sanity cap so a malicious or accidentally-broad export can't ask
-	// for millions of rows. The frontend can override per query.
+	// Sanity cap so a malicious or accidentally-broad export can't ask for millions of rows.
 	private const int MaxExportPageSize = 10_000;
 
 	private readonly IStaffService _staffService;

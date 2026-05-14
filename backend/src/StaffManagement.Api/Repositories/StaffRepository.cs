@@ -97,8 +97,7 @@ public sealed class StaffRepository : IStaffRepository
 
 		try
 		{
-			// DeleteStaff is a soft-delete: it flips IsDeleted=1 and returns the
-			// row so callers can confirm what was deleted (and surface it in the UI).
+			// DeleteStaff soft-deletes and returns the row, hence QuerySingleAsync rather than ExecuteAsync.
 			return await connection.QuerySingleAsync<Staff>(command);
 		}
 		catch (SqlException ex)

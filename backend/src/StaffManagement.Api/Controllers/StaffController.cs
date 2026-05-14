@@ -58,8 +58,6 @@ public class StaffController : ControllerBase
 		Guid id,
 		CancellationToken cancellationToken)
 	{
-		// Soft-delete: returns the row we just marked deleted so the
-		// frontend can show a confirmation toast with the staff's name.
 		return await _staffService.DeleteAsync(id, cancellationToken);
 	}
 }

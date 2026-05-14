@@ -47,7 +47,6 @@ export async function updateStaff(
 }
 
 export async function deleteStaff(id: string): Promise<StaffResponse> {
-	// Soft-delete: backend returns the row it just marked deleted.
 	const { data } = await api.delete<StaffResponse>(`/api/staff/${id}`)
 	return data
 }

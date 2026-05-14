@@ -7,4 +7,10 @@
     <ModelCollation>1033, CI</ModelCollation>
     <ProjectGuid>1ADF6EB1-5109-4A5D-AAA1-8463FB152332</ProjectGuid>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- Post-deploy is appended verbatim to the DACPAC deploy script; it
+         is not part of the schema model build. -->
+    <PostDeploy Include="PostDeploy/Script.PostDeployment.sql" />
+    <Build Remove="PostDeploy/Script.PostDeployment.sql" />
+  </ItemGroup>
 </Project>

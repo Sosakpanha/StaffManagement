@@ -18,3 +18,16 @@ CREATE UNIQUE INDEX UX_Staff_StaffId
 ON dbo.Staff (StaffId)
 WHERE IsDeleted = 0;
 GO
+
+-- Search-supporting indexes. Both are filtered on IsDeleted = 0 because
+-- every read path adds that predicate, so the optimizer can use these
+-- without an extra residual filter.
+CREATE INDEX IX_Staff_FullName
+ON dbo.Staff (FullName)
+WHERE IsDeleted = 0;
+GO
+
+CREATE INDEX IX_Staff_Birthday
+ON dbo.Staff (Birthday)
+WHERE IsDeleted = 0;
+GO

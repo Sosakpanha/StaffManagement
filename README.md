@@ -112,6 +112,11 @@ is suppressed to Warning.
 **No auth.** This is an internal admin tool with open CRUD endpoints —
 no JWT, no login. CORS is restricted to the configured Vite dev origin.
 
+**No client-side persistence.** The frontend keeps no `localStorage`,
+cookies, IndexedDB or cached entities; every render fetches from the
+API, so there's no surface for an XSS to lift a stale token or
+customer data from.
+
 **Tests.** Backend integration tests spin a real SQL Server via
 `Testcontainers.MsSql`, apply the DACPAC with
 `Microsoft.SqlServer.DacFx` once per fixture, and use `Respawn` to
@@ -146,7 +151,7 @@ The decisions worth surfacing aren't the obvious ones (.NET 8, SQL Server). They
 Grouped by area. None of these block the current submission; they're what I'd reach for next.
 
 **Security & multi-user**
-- Auth: ASP.NET Core JWT bearer + `[Authorize]`, plus an audit trail (`CreatedBy / UpdatedBy / DeletedBy`) once there's a user identity to record.
+- Auth via `HttpOnly` + `Secure` + `SameSite=Strict` session cookies (rather than localStorage-backed JWTs) since this is a browser-only admin tool — XSS can't exfiltrate a cookie the browser never hands to JavaScript. Pair with `[Authorize]` on the controllers and an audit trail (`CreatedBy / UpdatedBy / DeletedBy`) once there's a user identity to record.
 - Rate limiting on the open endpoints if the API is ever exposed publicly.
 - Optimistic concurrency on `UpdateStaff` — return `RowVersion`/`UpdatedAt` and require it on PUT so two simultaneous edits can't silently overwrite each other.
 

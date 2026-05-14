@@ -79,6 +79,11 @@ playwright/.cache/
 !.env.example
 
 # =========================
+# Claude Code local state
+# =========================
+.claude/
+
+# =========================
 # OS
 # =========================
 .DS_Store

@@ -134,6 +134,24 @@ public sealed class StaffRepository : IStaffRepository
 		return (items, total);
 	}
 
+	public async Task<int> PurgeSoftDeletedAsync(int retentionDays, CancellationToken cancellationToken = default)
+	{
+		await using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+
+		var parameters = new DynamicParameters();
+		parameters.Add("@RetentionDays", retentionDays, DbType.Int32);
+		parameters.Add("@PurgedCount",   dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+		var command = new CommandDefinition(
+			commandText: "dbo.PurgeSoftDeletedStaff",
+			parameters: parameters,
+			commandType: CommandType.StoredProcedure,
+			cancellationToken: cancellationToken);
+
+		await connection.ExecuteAsync(command);
+		return parameters.Get<int>("@PurgedCount");
+	}
+
 	private static ApiException TranslateSqlException(SqlException ex) => ex.Number switch
 	{
 		50001 => new ApiException(EnumApiError.DuplicateStaffId, "Staff with this StaffId already exists.", ex),

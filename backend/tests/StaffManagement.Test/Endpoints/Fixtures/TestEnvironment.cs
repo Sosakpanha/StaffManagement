@@ -66,6 +66,9 @@ public class TestEnvironment
 		Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT",            "Development");
 		Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", ConnectionString);
 		Environment.SetEnvironmentVariable("Cors__AllowedOrigins__0",           "http://localhost:5173");
+		// Keep the retention background job out of integration tests so it
+		// can't race the rows the tests are about to insert.
+		Environment.SetEnvironmentVariable("Staff__Retention__Enabled",          "false");
 	}
 
 	[OneTimeTearDown]

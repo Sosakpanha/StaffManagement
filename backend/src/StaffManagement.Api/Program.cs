@@ -12,6 +12,7 @@ using StaffManagement.Api.Data.Interfaces;
 using StaffManagement.Api.Enums;
 using StaffManagement.Api.Exports;
 using StaffManagement.Api.Filters;
+using StaffManagement.Api.HostedServices;
 using StaffManagement.Api.Repositories;
 using StaffManagement.Api.Repositories.Interfaces;
 using StaffManagement.Api.Services;
@@ -81,6 +82,9 @@ try
 	builder.Services.AddSingleton<IStaffService, StaffService>();
 	builder.Services.AddSingleton<StaffExcelExporter>();
 	builder.Services.AddSingleton<StaffPdfExporter>();
+
+	builder.Services.Configure<SoftDeleteRetentionOptions>(builder.Configuration.GetSection("Staff:Retention"));
+	builder.Services.AddHostedService<SoftDeleteRetentionService>();
 
 	builder.Services.AddEndpointsApiExplorer();
 	builder.Services.AddSwaggerGen(options =>

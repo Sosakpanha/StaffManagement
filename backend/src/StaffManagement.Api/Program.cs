@@ -78,6 +78,8 @@ try
 
 	builder.Services.AddSingleton<ExceptionFilter>();
 
+	builder.Services.AddMemoryCache();
+
 	builder.Services.AddSingleton<IStaffRepository, StaffRepository>();
 	builder.Services.AddSingleton<IStaffService, StaffService>();
 	builder.Services.AddSingleton<StaffExcelExporter>();

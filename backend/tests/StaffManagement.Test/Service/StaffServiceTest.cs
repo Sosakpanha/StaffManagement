@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Caching.Memory;
 using NSubstitute;
 using StaffManagement.Api.Entities;
 using StaffManagement.Api.Enums;
@@ -13,13 +14,21 @@ namespace StaffManagement.Test.Service;
 public class StaffServiceTest
 {
 	private IStaffRepository _repository = null!;
+	private IMemoryCache _cache = null!;
 	private StaffService _service = null!;
 
 	[SetUp]
 	public void SetUp()
 	{
 		_repository = Substitute.For<IStaffRepository>();
-		_service = new StaffService(_repository);
+		_cache = new MemoryCache(new MemoryCacheOptions());
+		_service = new StaffService(_repository, _cache);
+	}
+
+	[TearDown]
+	public void TearDown()
+	{
+		_cache.Dispose();
 	}
 
 	[Test]
@@ -83,6 +92,48 @@ public class StaffServiceTest
 		response.Page.Should().Be(3);
 		response.PageSize.Should().Be(5);
 		response.TotalPages.Should().Be(9); // ceil(42 / 5)
+	}
+
+	[Test]
+	public async Task SearchAsync_should_cache_identical_requests()
+	{
+		var entity = SampleStaff();
+		_repository
+			.SearchAsync(Arg.Any<StaffSearchRequest>(), Arg.Any<CancellationToken>())
+			.Returns((new[] { entity } as IReadOnlyList<Staff>, 1));
+
+		var request = new StaffSearchRequest { FullName = "Alice", Page = 1, PageSize = 20 };
+
+		await _service.SearchAsync(request);
+		await _service.SearchAsync(request);
+
+		await _repository.Received(1).SearchAsync(Arg.Any<StaffSearchRequest>(), Arg.Any<CancellationToken>());
+	}
+
+	[Test]
+	public async Task SearchAsync_cache_is_invalidated_by_a_write()
+	{
+		var entity = SampleStaff();
+		_repository
+			.SearchAsync(Arg.Any<StaffSearchRequest>(), Arg.Any<CancellationToken>())
+			.Returns((new[] { entity } as IReadOnlyList<Staff>, 1));
+		_repository
+			.CreateAsync(Arg.Any<StaffCreateRequest>(), Arg.Any<CancellationToken>())
+			.Returns(entity);
+
+		var request = new StaffSearchRequest();
+
+		await _service.SearchAsync(request); // miss, hits repo
+		await _service.SearchAsync(request); // hit, no repo call
+
+		await _service.CreateAsync(new StaffCreateRequest
+		{
+			StaffId = "X", FullName = "X", Birthday = new DateOnly(1990, 1, 1), Gender = 1
+		});
+
+		await _service.SearchAsync(request); // invalidated, hits repo again
+
+		await _repository.Received(2).SearchAsync(Arg.Any<StaffSearchRequest>(), Arg.Any<CancellationToken>());
 	}
 
 	[Test]

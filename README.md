@@ -126,6 +126,49 @@ service container → sqlpackage publish → API + Vite + Playwright).
 The e2e job uploads Playwright traces, the HTML report, and the API
 log as an artifact on failure.
 
+## Assumptions
+
+The decisions worth surfacing aren't the obvious ones (.NET 8, SQL Server). They're the ones a reviewer might second-guess and where the *why* matters.
+
+1. **Internal admin tool, no auth.** The assignment didn't call for multi-user or external exposure, so the API is open and CORS-restricted to a single Vite origin. If it ever leaves the admin network, add ASP.NET Core authentication + `[Authorize]` on the controllers.
+2. **Single-table domain.** Staff is the only entity — no departments, roles, managers, or relationships. The schema is deliberately flat.
+3. **Gender is a constrained int (`1=Male`, `2=Female`).** Matches the spec; not extensible without a schema change.
+4. **`StaffId` is a human-assigned key, max 8 chars.** Not auto-generated. Uniqueness is enforced via a *filtered* unique index so a soft-deleted StaffId can be reused for a new staff member.
+5. **Soft delete preserves history; deleted IDs are reusable.** `DeleteStaff` flips `IsDeleted` and stamps `DeletedAt`; every read filters `IsDeleted = 0`. The alternative ("deleted IDs stay reserved") is also defensible — flagged here so the choice is explicit.
+6. **Stored procedures are the only data path.** No EF Core, no ad-hoc SQL from C#. All writes go through reviewed SPs; the DACPAC is the schema source of truth.
+7. **Newtonsoft.Json + camelCase wire format.** Matches the conventions of an existing internal project so a developer moving between codebases doesn't context-switch.
+8. **Error envelope is `{ code, message }`, not `{ success, data, message }`.** The HTTP status carries success/failure, so a `success` boolean would be redundant. Stable numeric `code`s in `EnumApiError` align 1:1 with the `THROW` codes the SPs raise (`50001`, `50404`, …) so a SQL error maps to an API error unambiguously.
+9. **Timestamps are stored in UTC; the frontend displays them as-is.** A future timezone-aware UI would convert on render.
+10. **macOS Apple Silicon dev environment.** SQL Server's `linux/amd64` image needs Rosetta in Docker Desktop. Documented in Prereqs.
+
+## Future improvements
+
+Grouped by area. None of these block the current submission; they're what I'd reach for next.
+
+**Security & multi-user**
+- Auth: ASP.NET Core JWT bearer + `[Authorize]`, plus an audit trail (`CreatedBy / UpdatedBy / DeletedBy`) once there's a user identity to record.
+- Rate limiting on the open endpoints if the API is ever exposed publicly.
+- Optimistic concurrency on `UpdateStaff` — return `RowVersion`/`UpdatedAt` and require it on PUT so two simultaneous edits can't silently overwrite each other.
+
+**Database & queries**
+- A scheduled purge job for `IsDeleted = 1 AND DeletedAt < @cutoff` so soft-deleted rows don't accumulate forever.
+- A restore endpoint — flip `IsDeleted` back to `0` — for staff deleted by mistake. The data model already supports it.
+- Full-text index on `FullName` if search volume grows beyond what the current B-tree + `LIKE %x%` can serve.
+
+**Frontend**
+- Mobile-responsive table — currently overflows horizontally on narrow viewports. Switch to a card-list view at `<640px`.
+- Code-splitting — the production bundle is ~556 KB (174 KB gzipped); lazy-loading `react-day-picker` would knock the largest chunk off the critical path.
+- Exit animations on modal/drawer/toast — only enter animations exist today; closing snaps.
+- Localization scaffolding — error messages and UI strings are English-only.
+
+**Ops & observability**
+- Deeper `/health` — currently returns OK as soon as the API is up. Add a "DB reachable" probe so a half-down API stops claiming health.
+- Ship NLog output to a central aggregator (Seq, ELK, OpenTelemetry) in production rather than writing to local files.
+- `dotnet publish` step in CI as a release-readiness signal.
+
+**Exports**
+- Stream the XLSX/PDF instead of building the whole document in `MemoryStream`. The current 10k page-size cap keeps the in-memory footprint bounded, but a true streaming writer would handle larger exports without memory pressure.
+
 ## Project layout
 
 ```text

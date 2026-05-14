@@ -18,3 +18,52 @@ body {
 	background: var(--color-slate-50, #f8fafc);
 }
 
+/* ---------- Motion ----------------------------------------------------------
+ * Small, reusable keyframes for the enter animations of overlays, popovers,
+ * toasts and pages. Exit animations would require state-machine plumbing in
+ * each component, so we only animate the enter path — already a big win.
+ *
+ * Respect `prefers-reduced-motion`: anything that uses these classes will
+ * disable the animation when the user prefers reduced motion.
+ * -------------------------------------------------------------------------- */
+
+@keyframes anim-fade-in {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+@keyframes anim-zoom-in {
+	from { opacity: 0; transform: scale(0.96); }
+	to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes anim-slide-in-right {
+	from { transform: translateX(100%); }
+	to   { transform: translateX(0); }
+}
+
+@keyframes anim-slide-in-top {
+	from { opacity: 0; transform: translateY(-8px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes anim-slide-in-down {
+	from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+	to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.anim-fade-in       { animation: anim-fade-in       150ms ease-out both; }
+.anim-zoom-in       { animation: anim-zoom-in       180ms ease-out both; }
+.anim-slide-in-right{ animation: anim-slide-in-right 220ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-slide-in-top  { animation: anim-slide-in-top  200ms ease-out both; }
+.anim-slide-in-down { animation: anim-slide-in-down 150ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+	.anim-fade-in,
+	.anim-zoom-in,
+	.anim-slide-in-right,
+	.anim-slide-in-top,
+	.anim-slide-in-down {
+		animation: none;
+	}
+}

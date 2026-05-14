@@ -86,13 +86,18 @@ public class StaffServiceTest
 	}
 
 	[Test]
-	public async Task DeleteAsync_should_pass_id_through_to_repository()
+	public async Task DeleteAsync_should_return_the_soft_deleted_staff()
 	{
-		var id = Guid.NewGuid();
+		var entity = SampleStaff();
+		_repository.DeleteAsync(entity.Id, Arg.Any<CancellationToken>())
+			.Returns(entity);
 
-		await _service.DeleteAsync(id);
+		var response = await _service.DeleteAsync(entity.Id);
 
-		await _repository.Received(1).DeleteAsync(id, Arg.Any<CancellationToken>());
+		await _repository.Received(1).DeleteAsync(entity.Id, Arg.Any<CancellationToken>());
+		response.Id.Should().Be(entity.Id);
+		response.StaffId.Should().Be(entity.StaffId);
+		response.FullName.Should().Be(entity.FullName);
 	}
 
 	private static Staff SampleStaff() => new()

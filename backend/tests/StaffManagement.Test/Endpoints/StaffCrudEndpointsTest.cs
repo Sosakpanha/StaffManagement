@@ -104,15 +104,27 @@ public class StaffCrudEndpointsTest : EndpointTestBase
 	}
 
 	[Test]
-	public async Task Delete_should_return_204_then_404_on_second_call()
+	public async Task Delete_should_soft_delete_return_the_row_and_then_404_on_second_call()
 	{
 		var created = await CreateAsync("SM00001", "Alice");
 
 		var first = await Client.DeleteAsync($"/api/staff/{created.Id}");
-		first.StatusCode.Should().Be(HttpStatusCode.NoContent);
+		first.StatusCode.Should().Be(HttpStatusCode.OK);
+		var deleted = (await first.Content.ReadFromJsonAsync<StaffPayload>())!;
+		deleted.Id.Should().Be(created.Id);
+		deleted.StaffId.Should().Be(created.StaffId);
+		deleted.FullName.Should().Be(created.FullName);
+
+		// Soft-deleted rows are filtered out of every read path.
+		var afterGet = await Client.GetAsync($"/api/staff/{created.Id}");
+		afterGet.StatusCode.Should().Be(HttpStatusCode.NotFound);
 
 		var second = await Client.DeleteAsync($"/api/staff/{created.Id}");
 		second.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+		// And the same StaffId can now be reused for a brand-new staff.
+		var recreated = await CreateAsync("SM00001", "Alice Reborn");
+		recreated.Id.Should().NotBe(created.Id);
 	}
 
 	private async Task<StaffPayload> CreateAsync(string staffId, string fullName)

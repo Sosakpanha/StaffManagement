@@ -18,6 +18,7 @@ using StaffManagement.Api.Exports;
 using StaffManagement.Api.Extensions;
 using StaffManagement.Api.Filters;
 using StaffManagement.Api.HostedServices;
+using StaffManagement.Api.Jobs;
 using StaffManagement.Api.Models.Settings;
 using StaffManagement.Api.Repositories;
 using StaffManagement.Api.Repositories.Interfaces;
@@ -91,8 +92,7 @@ try
 	builder.Services.AddSingleton<StaffExcelExporter>();
 	builder.Services.AddSingleton<StaffPdfExporter>();
 
-	builder.Services.Configure<SoftDeleteRetentionOptions>(builder.Configuration.GetSection("Staff:Retention"));
-	builder.Services.AddHostedService<SoftDeleteRetentionService>();
+	builder.Services.Configure<PurgeDeletedStaffOptions>(builder.Configuration.GetSection("Staff:Retention"));
 
 	builder.Services.Configure<SchedulerSettings>(builder.Configuration.GetSection(nameof(SchedulerSettings)));
 	builder.Services.AddJobScheduler();

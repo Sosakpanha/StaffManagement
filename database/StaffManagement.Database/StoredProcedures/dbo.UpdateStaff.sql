@@ -8,10 +8,10 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	IF NOT EXISTS (SELECT 1 FROM dbo.Staff WHERE Id = @Id)
+	IF NOT EXISTS (SELECT 1 FROM dbo.Staff WHERE Id = @Id AND IsDeleted = 0)
 		THROW 50404, 'Staff not found.', 1;
 
-	IF EXISTS (SELECT 1 FROM dbo.Staff WHERE StaffId = @StaffId AND Id <> @Id)
+	IF EXISTS (SELECT 1 FROM dbo.Staff WHERE StaffId = @StaffId AND Id <> @Id AND IsDeleted = 0)
 		THROW 50001, 'Staff with this StaffId already exists.', 1;
 
 	UPDATE dbo.Staff

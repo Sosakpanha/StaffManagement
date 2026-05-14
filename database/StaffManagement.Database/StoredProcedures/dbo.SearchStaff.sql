@@ -33,10 +33,12 @@ BEGIN
 	DECLARE @SortDirection nvarchar(4) =
 		CASE WHEN LOWER(@SortDir) = N'desc' THEN N'DESC' ELSE N'ASC' END;
 
-	-- Total count of the filtered set (ignores paging).
+	-- Total count of the filtered set (ignores paging). Soft-deleted rows are
+	-- excluded everywhere via IsDeleted = 0.
 	SELECT @TotalCount = COUNT(*)
 	FROM dbo.Staff
-	WHERE (@StaffId      IS NULL OR StaffId  LIKE N'%' + @StaffId  + N'%')
+	WHERE IsDeleted = 0
+	  AND (@StaffId      IS NULL OR StaffId  LIKE N'%' + @StaffId  + N'%')
 	  AND (@Gender       IS NULL OR Gender    = @Gender)
 	  AND (@BirthdayFrom IS NULL OR Birthday >= @BirthdayFrom)
 	  AND (@BirthdayTo   IS NULL OR Birthday <= @BirthdayTo)
@@ -47,7 +49,8 @@ BEGIN
 	DECLARE @Sql nvarchar(max) = N'
 		SELECT Id, StaffId, FullName, Birthday, Gender, CreatedAt, UpdatedAt
 		FROM dbo.Staff
-		WHERE (@StaffId      IS NULL OR StaffId  LIKE N''%'' + @StaffId  + N''%'')
+		WHERE IsDeleted = 0
+		  AND (@StaffId      IS NULL OR StaffId  LIKE N''%'' + @StaffId  + N''%'')
 		  AND (@Gender       IS NULL OR Gender    = @Gender)
 		  AND (@BirthdayFrom IS NULL OR Birthday >= @BirthdayFrom)
 		  AND (@BirthdayTo   IS NULL OR Birthday <= @BirthdayTo)

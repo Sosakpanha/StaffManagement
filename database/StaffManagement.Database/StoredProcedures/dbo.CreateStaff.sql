@@ -7,7 +7,7 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	IF EXISTS (SELECT 1 FROM dbo.Staff WHERE StaffId = @StaffId)
+	IF EXISTS (SELECT 1 FROM dbo.Staff WHERE StaffId = @StaffId AND IsDeleted = 0)
 		THROW 50001, 'Staff with this StaffId already exists.', 1;
 
 	DECLARE @Id uniqueidentifier = NEWID();

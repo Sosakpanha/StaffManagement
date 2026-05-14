@@ -6,6 +6,7 @@ BEGIN
 
 	SELECT Id, StaffId, FullName, Birthday, Gender, CreatedAt, UpdatedAt
 	FROM dbo.Staff
-	WHERE Id = @Id;
+	WHERE Id = @Id
+	  AND IsDeleted = 0;
 END;
 GO
